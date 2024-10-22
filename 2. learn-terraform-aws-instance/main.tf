@@ -24,6 +24,11 @@ resource "aws_instance" "app_server" {
     command = "echo ${self.id} ${self.public_ip} ${self.private_ip} ${self.instance_type} >> file.txt"
   }
 
+  provisioner "local-exec" {
+    when    = destroy
+    command = "echo 'The instance is destroyed' >> file.txt"
+  }
+
   tags = {
     Name = "tf-practise-app-server"
   }
