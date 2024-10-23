@@ -5,14 +5,27 @@ provider "aws" {
   region = "us-east-1"
 }
 
-resource "random_pet" "petname" {
+resource "random_pet" "bucket_name_1" {
   length    = 5
   separator = "-"
 }
 
-resource "aws_s3_bucket" "sample" {
-  bucket = random_pet.petname.id
+resource "random_pet" "bucket_name_2" {
+  length    = 5
+  separator = "-"
+}
 
+locals {
+  bucket_names = {
+    bucket_1 = random_pet.bucket_name_1.id
+    bucket_2 = random_pet.bucket_name_2.id
+  }
+}
+
+resource "aws_s3_bucket" "sample" {
+  for_each = local.bucket_names
+
+  bucket = each.value
   tags = {
     public_bucket = false
   }
