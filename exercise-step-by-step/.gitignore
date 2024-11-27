@@ -1,0 +1,11 @@
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+*.pem
+*.pub
+
+*.tfvars
+*.txt
