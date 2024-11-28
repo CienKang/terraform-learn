@@ -30,3 +30,8 @@ variable "private_subnet_cidrs" {
   type        = list(string)
 
 }
+
+variable "ec2_user_data_script" {
+  description = "The user data script to run on the EC2 instance"
+  type        = string
+}

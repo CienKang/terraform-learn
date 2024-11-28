@@ -107,7 +107,7 @@ resource "aws_nat_gateway" "tf_public_nat_gw" {
 resource "aws_route" "tf_private_route_nat_gw" {
   route_table_id         = aws_route_table.tf_private_route_table.id
   destination_cidr_block = "0.0.0.0/0"
-  nat_gateway_id         = aws_nat_gateway.tf_public_nat_gw
+  nat_gateway_id         = aws_nat_gateway.tf_public_nat_gw.id
 }
 
 # Create security groups for the public and private subnets.
@@ -160,6 +160,50 @@ resource "aws_security_group" "tf_private_subnet_sg" {
     to_port     = 0
     protocol    = "-1"
     cidr_blocks = ["0.0.0.0/0"]
+  }
+
+}
+
+# launch ec2 instance of Amazon Linux 2 AMI
+
+# get latest ami id of Amazon Linux 2
+data "aws_ami" "amazon_linux_2" {
+  most_recent = true
+  owners      = ["amazon"]
+
+  filter {
+    name   = "name"
+    values = ["amzn2-ami-hvm-2.0.*-x86_64-gp2"]
+  }
+}
+
+# create key_pair for ssh
+resource "aws_key_pair" "tf_ssh_key_pair" {
+  key_name   = "tf_ssh_key_pair"
+  public_key = file("./ssh_key_pair.pub")
+
+  tags = {
+    Name        = "tf_ssh_key_pair",
+    Environment = "tf"
+  }
+}
+
+resource "aws_instance" "tf_ec2_instance" {
+  ami                         = data.aws_ami.amazon_linux_2.id
+  instance_type               = "t2.micro"
+  key_name                    = aws_key_pair.tf_ssh_key_pair.key_name
+  subnet_id                   = aws_subnet.tf_public_subnet[0].id
+  vpc_security_group_ids      = [aws_security_group.tf_public_subnet_sg.id]
+  associate_public_ip_address = true
+
+  provisioner "local-exec" {
+    command = "echo ${aws_instance.tf_ec2_instance.public_dns} > file.txt"
+  }
+
+  user_data = var.ec2_user_data_script
+  tags = {
+    Name        = "tf_ec2_instance"
+    Environment = "tf"
   }
 
 }

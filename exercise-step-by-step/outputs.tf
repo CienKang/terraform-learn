@@ -27,3 +27,24 @@ output "tf_public_rt_assoc" {
 output "tf_private_rt_assoc" {
   value = aws_route_table_association.tf_private_rt_assoc[*].subnet_id
 }
+
+output "ami_id" {
+  value = {
+    id       = data.aws_ami.amazon_linux_2.id,
+    image_id = data.aws_ami.amazon_linux_2.image_id
+
+  }
+}
+
+output "tf_ssh_key_pair" {
+  value = aws_key_pair.tf_ssh_key_pair.key_name
+
+}
+
+output "tf_ec2_instance" {
+  value = {
+    id        = aws_instance.tf_ec2_instance.id
+    public_ip = aws_instance.tf_ec2_instance.public_ip,
+    dns       = aws_instance.tf_ec2_instance.public_dns
+  }
+}
