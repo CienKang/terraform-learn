@@ -80,3 +80,38 @@ resource "aws_route_table_association" "tf_private_rt_assoc" {
   subnet_id      = aws_subnet.tf_private_subnet[count.index].id
   route_table_id = aws_route_table.tf_private_route_table.id
 }
+
+# 2. Add Networking Components
+
+# Creating an elastic IP address to use for the NAT Gateway, then create a NAT Gateway in the public subnet and associate the EIP with it.
+resource "aws_eip" "tf_public_nat_ip" {
+  vpc = true
+  tags = {
+    Name        = "tf_public_nat_ip",
+    Environment = "tf"
+  }
+}
+
+resource "aws_nat_gateway" "tf_public_nat_gw" {
+  allocation_id = aws_eip.tf_public_nat_ip.id
+  subnet_id     = aws_subnet.tf_public_subnet[0].id
+
+  depends_on = [aws_eip.tf_public_nat_ip, aws_subnet.tf_public_subnet]
+  tags = {
+    Name        = "tf_public_nat_gw",
+    Environment = "tf"
+  }
+}
+
+# Create a route in the private route table that sends all traffic to the NAT Gateway.
+resource "aws_route" "tf_private_route_nat_gw" {
+  route_table_id         = aws_route_table.tf_private_route_table.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.tf_public_nat_gw
+}
+
+resource "aws_security_group" "tf_public_subnet_sg" {
+  name   = "tf_public_subnet_sg"
+  vpc_id = aws_vpc.tf_vpc.id
+
+}
