@@ -110,8 +110,56 @@ resource "aws_route" "tf_private_route_nat_gw" {
   nat_gateway_id         = aws_nat_gateway.tf_public_nat_gw
 }
 
+# Create security groups for the public and private subnets.
 resource "aws_security_group" "tf_public_subnet_sg" {
   name   = "tf_public_subnet_sg"
   vpc_id = aws_vpc.tf_vpc.id
+
+  description = "Allows SSH and HTTP inbound traffic"
+  ingress {
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name        = "tf_public_subnet_sg",
+    Environment = "tf"
+  }
+}
+
+resource "aws_security_group" "tf_private_subnet_sg" {
+  name   = "tf_private_subnet_sg"
+  vpc_id = aws_vpc.tf_vpc.id
+
+  description = "Allows all outbound traffic and inbound traffic only from public security group"
+
+  ingress {
+    from_port       = 0
+    to_port         = 0
+    protocol        = "-1"
+    security_groups = [aws_security_group.tf_public_subnet_sg.id]
+  }
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
 
 }
